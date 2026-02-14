@@ -27,7 +27,7 @@ async def calculate():
         logger.info("Loading project data...")
         
         # Load Asset Data
-        asset_df = pd.read_csv(data_path / "la-haute-borne-asset_table.csv")
+        asset_df = pd.read_csv(data_path / "la-haute-borne_asset_table.csv")
 
         # Load SCADA Data (Only needed columns: Date_time, P_avg, Ws_avg, Wind_turbine_name)
         # Note: Wind_turbine_name is required for mapping asset_id
