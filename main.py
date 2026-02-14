@@ -53,11 +53,12 @@ async def calculate():
         # ERA5 cols: [index], datetime, ws_100m, u_100, v_100, dens_100m...
         
         era5_cols = ["datetime", "ws_100m", "u_100", "v_100", "dens_100m"]
-        era5_df = pd.read_csv(data_path / "era5_wind_la_haute_borne.csv", index_col=0, usecols=[0] + era5_cols)
+        # Fix for mixed type error: usecols must be all strings. First col is "Unnamed: 0"
+        era5_df = pd.read_csv(data_path / "era5_wind_la_haute_borne.csv", index_col=0, usecols=["Unnamed: 0"] + era5_cols)
         era5_df["datetime"] = pd.to_datetime(era5_df["datetime"], utc=True).dt.tz_localize(None)
         
         merra2_cols = ["datetime", "ws_50m", "u_50", "v_50", "dens_50m"]
-        merra2_df = pd.read_csv(data_path / "merra2_la_haute_borne.csv", index_col=0, usecols=[0] + merra2_cols)
+        merra2_df = pd.read_csv(data_path / "merra2_la_haute_borne.csv", index_col=0, usecols=["Unnamed: 0"] + merra2_cols)
         merra2_df["datetime"] = pd.to_datetime(merra2_df["datetime"], utc=True).dt.tz_localize(None)
 
         # Define Metadata based on verified mapping
