@@ -27,12 +27,13 @@ async def calculate():
         logger.info("Loading project data...")
         
         # Load Asset Data
-        asset_df = pd.read_csv(data_path / "la-haute-borne_asset_table.csv")
+        asset_df = pd.read_csv(data_path / "la-haute-borne-asset_table.csv")
 
-        # Load SCADA Data (Only needed columns: Date_time, P_avg, Ws_avg)
+        # Load SCADA Data (Only needed columns: Date_time, P_avg, Ws_avg, Wind_turbine_name)
+        # Note: Wind_turbine_name is required for mapping asset_id
         scada_df = pd.read_csv(
             data_path / "la-haute-borne-data-2014-2015.csv", 
-            usecols=["Date_time", "P_avg", "Ws_avg"]
+            usecols=["Date_time", "P_avg", "Ws_avg", "Wind_turbine_name"]
         )
         scada_df["Date_time"] = pd.to_datetime(scada_df["Date_time"], utc=True).dt.tz_localize(None)
 
