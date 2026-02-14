@@ -9,7 +9,6 @@ from openoa.analysis.aep import MonteCarloAEP
 import logging
 import os
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -26,35 +25,24 @@ async def calculate():
         
         logger.info("Loading project data...")
         
-        # Load Asset Data
         asset_df = pd.read_csv(data_path / "la-haute-borne_asset_table.csv")
 
-        # Load SCADA Data (Only needed columns: Date_time, P_avg, Ws_avg, Wind_turbine_name)
-        # Note: Wind_turbine_name is required for mapping asset_id
+
         scada_df = pd.read_csv(
             data_path / "la-haute-borne-data-2014-2015.csv", 
             usecols=["Date_time", "P_avg", "Ws_avg", "Wind_turbine_name"]
         )
         scada_df["Date_time"] = pd.to_datetime(scada_df["Date_time"], utc=True).dt.tz_localize(None)
 
-        # Load Meter Data (Only needed columns: time_utc, net_energy_kwh, availability_kwh, curtailment_kwh)
         meter_cols = ["time_utc", "net_energy_kwh", "availability_kwh", "curtailment_kwh"]
         meter_df = pd.read_csv(data_path / "plant_data.csv", usecols=meter_cols)
         meter_df["time_utc"] = pd.to_datetime(meter_df["time_utc"], utc=True).dt.tz_localize(None)
 
-        # Use same file for curtail data as it contains those columns
         curtail_df = meter_df.copy()
 
-        # Load Reanalysis Data - ERA5 and MERRA2 have leading index columns
-        # Needed for ERA5: datetime, ws_100m, u_100, v_100, dens_100m (index_col=0 is usually the first col in CSV)
-        # To avoid loading full index and then separate columns, we specify names if known, or just load everything and slim down.
-        # Given reanalysis structure, usecols is tricky with index_col=0. 
-        # Safer strategy: Load with usecols if we know the names, but we handle index_col=0.
-        # Let's trust pandas to be smarter if we specify usecols.
-        # ERA5 cols: [index], datetime, ws_100m, u_100, v_100, dens_100m...
+
         
         era5_cols = ["datetime", "ws_100m", "u_100", "v_100", "dens_100m"]
-        # Fix for mixed type error: usecols must be all strings. First col is "Unnamed: 0"
         era5_df = pd.read_csv(data_path / "era5_wind_la_haute_borne.csv", index_col=0, usecols=["Unnamed: 0"] + era5_cols)
         era5_df["datetime"] = pd.to_datetime(era5_df["datetime"], utc=True).dt.tz_localize(None)
         
@@ -62,7 +50,6 @@ async def calculate():
         merra2_df = pd.read_csv(data_path / "merra2_la_haute_borne.csv", index_col=0, usecols=["Unnamed: 0"] + merra2_cols)
         merra2_df["datetime"] = pd.to_datetime(merra2_df["datetime"], utc=True).dt.tz_localize(None)
 
-        # Define Metadata based on verified mapping
         metadata = {
             "capacity": 8.2,
             "asset": {
@@ -116,9 +103,6 @@ async def calculate():
         logger.info("Running AEP Monte Carlo analysis...")
         pa = MonteCarloAEP(plant)
         pa.run(num_sim=5, progress_bar=False)
-
-        # Access results. MonteCarloAEP provides 'results' dataframe with summarized stats.
-        # pa.results is a DataFrame where columns are 'aep_GWh', 'avail_pct', etc.
         aep_mean = float(pa.results['aep_GWh'].mean())
         aep_std = float(pa.results['aep_GWh'].std()) if 'aep_GWh' in pa.results else 0.0
 
